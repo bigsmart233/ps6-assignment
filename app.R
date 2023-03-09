@@ -31,17 +31,16 @@ ui <- fluidPage(
              sidebarLayout(
                sidebarPanel (
                  "This panel displays average temperature over different time periods: months , years and decades",
-                 radioButtons("time","choose time", choices = c("month","year","decade"))
+                 radioButtons("average_over","choose time", choices = c("month","year","decade"))
                ),
                mainPanel(
-                 tableOutput("table")
+                 dataTableOutput(outputId = "table")
                )
              ))
   )
 )
 
 server <- function(input, output) {
-  # Create reactive data subset based on selected regions
   sample1 <- reactive({
     tro %>%
       filter(region %in% input$region)
@@ -74,27 +73,26 @@ server <- function(input, output) {
     if (input$average_over == "year") {
       temp_data <- tro %>%
         group_by(year) %>%
-        summarize(temp = mean(temp))
+        summarize(temp = mean(temp))%>%
+        arrange(year)
     } else if (input$average_over == "decade") {
       temp_data <- tro %>%
+        mutate(decade = 10*floor(year/10)
+               )%>%
         group_by(decade) %>%
-        summarize(temp = mean(temp))
-    } else {
+        summarize(temp = mean(temp))%>%
+        arrange(decade)
+    } else if (input$average_over == "month"){
       temp_data <- tro %>%
         group_by(month) %>%
-        summarize(temp = mean(temp))
+        summarize(temp = mean(temp))%>%
+        arrange(month)
+    
     }
     
    
-    temp_data <- temp_data %>%
-      filter(temp >= -0.356153846153846 & temp <= 0.216216216216216)
     
     
-    temp_data$decade <- ifelse(
-      input$average_over == "decade",
-      format(temp_data$decade, scientific = FALSE, nsmall = 2),
-     
-    )
     
     
   })
